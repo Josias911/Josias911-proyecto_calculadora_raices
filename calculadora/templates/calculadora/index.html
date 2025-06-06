@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculadora de Raíces</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1d3557;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+        }
+
+        h1::before {
+            content: "🧮 ";
+        }
+
+        .formulario {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            max-width: 700px;
+            margin: auto;
+        }
+
+        .campo {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #333;
+        }
+
+        input, select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .boton-container {
+            grid-column: span 2;
+            text-align: center;
+        }
+
+        .boton {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .boton:hover {
+            background-color: #218838;
+        }
+
+        .resultado {
+            max-width: 900px;
+            margin: 40px auto;
+            background-color: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+
+        img {
+            display: block;
+            margin: 20px auto;
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 700px) {
+            .formulario {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Calculadora de Raíces de Polinomios</h1>
+
+    <form method="post" class="formulario">
+        {% csrf_token %}
+        <div class="campo">
+            <label for="funcion">Función polinómica:</label>
+            {{ form.funcion }}
+        </div>
+        <div class="campo">
+            <label for="metodo">Método:</label>
+            {{ form.metodo }}
+        </div>
+        <div class="campo">
+            <label for="a">a (solo para Bisección):</label>
+            {{ form.a }}
+        </div>
+        <div class="campo">
+            <label for="b">b (solo para Bisección):</label>
+            {{ form.b }}
+        </div>
+        <div class="campo">
+            <label for="x0">x₀ (para Newton y Newton Modificado):</label>
+            {{ form.x0 }}
+        </div>
+        <div class="campo">
+            <label for="tolerancia">Tolerancia:</label>
+            {{ form.tolerancia }}
+        </div>
+        <div class="campo">
+            <label for="max_iter">Máximo número de iteraciones:</label>
+            {{ form.max_iter }}
+        </div>
+        <div class="boton-container">
+            <input type="submit" value="Calcular" class="boton">
+        </div>
+    </form>
+
+    {% if resultado %}
+    <div class="resultado">
+        {% if resultado.error %}
+            <p class="error">Error: {{ resultado.error }}</p>
+        {% else %}
+            <h2>Resultado</h2>
+            <p><strong>Raíz aproximada:</strong> {{ resultado.raiz }}</p>
+
+            <h3>Iteraciones</h3>
+            <table>
+                <thead>
+                    <tr>
+                        {% if form.cleaned_data.metodo == 'biseccion' %}
+                            <th>Iteración</th>
+                            <th>a</th>
+                            <th>b</th>
+                            <th>c</th>
+                            <th>f(c)</th>
+                            <th>Error</th>
+                        {% elif form.cleaned_data.metodo == 'newton' %}
+                            <th>Iteración</th>
+                            <th>xₙ</th>
+                            <th>xₙ₊₁</th>
+                            <th>f(xₙ)</th>
+                            <th>f '(xₙ)</th>
+                            <th>Error</th>
+                        {% elif form.cleaned_data.metodo == 'newton_mod' %}
+                            <th>Iteración</th>
+                            <th>xₙ</th>
+                            <th>xₙ₊₁</th>
+                            <th>f(xₙ)</th>
+                            <th>f '(x₀)</th>
+                            <th>Error</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fila in resultado.iteraciones %}
+                    <tr>
+                        {% for valor in fila %}
+                        <td>{{ valor }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if grafico %}
+                <h3>Gráfico del Polinomio</h3>
+                <img src="data:image/png;base64,{{ grafico }}" alt="Gráfico del polinomio">
+            {% endif %}
+        {% endif %}
+    </div>
+    {% endif %}
+</body>
+</html>
